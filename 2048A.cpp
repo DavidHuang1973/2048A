@@ -7,13 +7,14 @@
 //============================================================================
 
 //============================================================================
+// Usage: Use 'a'/'w'/'s'/'d' as left/up/down/right control key. The board is
+// displayed on the console screen.
+//
 // TODO LIST:
-// 1. Add random number generator.
-// 2.
 //
 // NEW Action:
 // 1. Random number generator is finished
-// 2.
+//
 //============================================================================
 
 #include <iostream>
@@ -102,7 +103,7 @@ bool checkMove()
 			{
 				if(j != 0)
 				{
-					if(board[i][j] == board[i][j-1])	//向上比较
+					if(board[i][j] == board[i][j-1])	//Compare left.
 					{
 						canMove = 1;
 						break;
@@ -110,7 +111,7 @@ bool checkMove()
 				}
 				if(i != 0)
 				{
-					if(board[i][j] == board[i-1][j])	//向左比较
+					if(board[i][j] == board[i-1][j])	//Compare up.
 					{
 						canMove = 1;
 						break;
@@ -118,7 +119,7 @@ bool checkMove()
 				}
 				if(j != 3)
 				{
-					if(board[i][j] == board[i][j+1])	//向右比较
+					if(board[i][j] == board[i][j+1])	//Compare right.
 					{
 						canMove = 1;
 						break;
@@ -126,7 +127,7 @@ bool checkMove()
 				}
 				if(i != 3)
 				{
-					if(board[i][j] == board[i+1][j])	//向右比较
+					if(board[i][j] == board[i+1][j])	//Compare down.
 					{
 						canMove = 1;
 						break;
