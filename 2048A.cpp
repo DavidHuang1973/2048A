@@ -7,23 +7,41 @@
 //============================================================================
 
 //============================================================================
-//TODO LIST
-//1. Add random number generator.
-//2.
+// TODO LIST:
+// 1. Add random number generator.
+// 2.
+//
+// NEW Action:
+// 1. Random number generator is finished
+// 2.
 //============================================================================
 
 #include <iostream>
+#include <vector>
 #include <string>
 #include <random>
 #include <cmath>
+#include <iomanip>
+
 #include <conio.h>
 
 using namespace std;
+
+struct Point{
+	int x;
+	int y;
+};
+
+vector<Point> pointQueue;
 
 int board[4][4], moveFlag[4][4];
 int randNum = 2;
 int randX = 4, randY = 4;	//Coordinate
 int score = 0;
+
+random_device rd;
+default_random_engine gen(time(NULL));
+uniform_int_distribution <> d(1, 10);
 
 //============================================================================
 //Initialization.
@@ -32,7 +50,7 @@ int score = 0;
 void showBoard()
 {
 	cout << "*** Scores: " << score << " ***" << endl;
-	cout << "----------------------" << endl;
+	cout << "---------------------" << endl;
 	for(int i=0; i<4; i++)
 	{
 		for(int j=0; j<4; j++)
@@ -41,7 +59,7 @@ void showBoard()
 		}
 		cout << endl << endl;
 	}
-	cout << "----------------------" << endl;
+	cout << "---------------------" << endl;
 }
 
 //MoveFlag=1，no merge is permitted here. Initial value is 0.
@@ -71,60 +89,65 @@ bool checkMove()
 {
 	bool canMove = 0;
 
-	for(int i=0; i<4; i++)
-		for(int j=0; j<4; j++)
-		{
-			if(board[i][j] == 0)
-			{
-				canMove =1;
-				break;
-			}
+	for(int m=0; m<4; m++)
+			for(int n=0; n<4; n++)
+				if(board[m][n] == 0){
+					canMove =1;
+					break;
+				}
 
-			if(j != 0)
+	if(canMove != 1){
+		for(int i=0; i<4; i++)
+			for(int j=0; j<4; j++)
 			{
-				if(board[i][j] == board[i][j-1])	//向上比较
+				if(j != 0)
 				{
-					canMove = 1;
-					break;
+					if(board[i][j] == board[i][j-1])	//向上比较
+					{
+						canMove = 1;
+						break;
+					}
+				}
+				if(i != 0)
+				{
+					if(board[i][j] == board[i-1][j])	//向左比较
+					{
+						canMove = 1;
+						break;
+					}
+				}
+				if(j != 3)
+				{
+					if(board[i][j] == board[i][j+1])	//向右比较
+					{
+						canMove = 1;
+						break;
+					}
+				}
+				if(i != 3)
+				{
+					if(board[i][j] == board[i+1][j])	//向右比较
+					{
+						canMove = 1;
+						break;
+					}
 				}
 			}
-			if(i != 0)
-			{
-				if(board[i][j] == board[i-1][j])	//向左比较
-				{
-					canMove = 1;
-					break;
-				}
-			}
-			if(j != 3)
-			{
-				if(board[i][j] == board[i][j+1])	//向右比较
-				{
-					canMove = 1;
-					break;
-				}
-			}
-			if(i != 3)
-			{
-				if(board[i][j] == board[i+1][j])	//向右比较
-				{
-					canMove = 1;
-					break;
-				}
-			}
-		}
-		return canMove;
+	}
+
+	return canMove;
 }
 
 
 //============================================================================
 //Move up.
 //============================================================================
-void moveUpByCol(int row, int col)
+int moveUpByCol(int row, int col)
 {
 	int m = 1;
 	int n;
 	int cur;
+	int mergeFlag = 0;
 
 	while(m <=3){
 		n = m-1;
@@ -135,12 +158,15 @@ void moveUpByCol(int row, int col)
 				board[cur][col] = 0;
 				cur = n;
 				n = n-1;
+				if(board[cur][col] != 0)
+					mergeFlag = 1;
 			}
 			else if(board[n][col] == board[cur][col] && moveFlag[n][col] != 1){
 				board[n][col] += board[cur][col];
 				score += board[n][col];
 				moveFlag[n][col] = 1;
 				board[cur][col] = 0;
+				mergeFlag = 1;
 				break;
 			}
 			else
@@ -148,10 +174,13 @@ void moveUpByCol(int row, int col)
 		}
 		m = m+1;
 	}
+	return mergeFlag;
 }
 
-void moveUp()
+int moveUp()
 {
+	int mergeFlag = 0;
+
 	initMoveFlag();
 
 	for(int j=0; j<4; j++){
@@ -159,18 +188,21 @@ void moveUp()
 				board[1][j] +
 				board[2][j] +
 				board[3][j]) != 0)
-		moveUpByCol(0, j);
+		if(moveUpByCol(0, j) == 1)
+			mergeFlag = 1;
 	}
+	return mergeFlag;
 }
 
 //============================================================================
 //Move down.
 //============================================================================
-void moveDownByCol(int row, int col)
+int moveDownByCol(int row, int col)
 {
 	int m = 2;
 	int n;
 	int cur;
+	int mergeFlag = 0;
 
 	while(m >= 0){
 		n = m+1;
@@ -181,12 +213,15 @@ void moveDownByCol(int row, int col)
 				board[cur][col] = 0;
 				cur = n;
 				n = n+1;
+				if(board[cur][col] != 0)
+					mergeFlag = 1;
 			}
 			else if(board[n][col] == board[cur][col] && moveFlag[n][col] != 1){
 				board[n][col] += board[cur][col];
 				score += board[n][col];
 				moveFlag[n][col] = 1;
 				board[cur][col] = 0;
+				mergeFlag = 1;
 				break;
 			}
 			else
@@ -194,10 +229,13 @@ void moveDownByCol(int row, int col)
 		}
 		m = m-1;
 	}
+	return mergeFlag;
 }
 
-void moveDown()
+int moveDown()
 {
+	int mergeFlag = 0;
+
 	initMoveFlag();
 
 	for(int j=3; j>=0; j--){
@@ -205,19 +243,21 @@ void moveDown()
 				board[1][j] +
 				board[2][j] +
 				board[3][j]) != 0)
-		moveDownByCol(3, j);
+		if(moveDownByCol(3, j) == 1)
+			mergeFlag = 1;
 	}
-
+	return mergeFlag;
 }
 
 //============================================================================
 //Move left.
 //============================================================================
-void moveLeftByRow(int row, int col)
+int moveLeftByRow(int row, int col)
 {
 	int m = 1;
 	int n;
 	int cur;
+	int mergeFlag = 0;
 
 	while(m <=3){
 		n = m-1;
@@ -228,12 +268,15 @@ void moveLeftByRow(int row, int col)
 				board[row][cur] = 0;
 				cur = n;
 				n = n-1;
+				if(board[row][cur] != 0)
+					mergeFlag = 1;
 			}
 			else if(board[row][n] == board[row][cur] && moveFlag[row][n] != 1){
 				board[row][n] += board[row][cur];
-				score += board[n][col];
+				score += board[row][n];
 				moveFlag[row][n] = 1;
 				board[row][cur] = 0;
+				mergeFlag = 1;
 				break;
 			}
 			else
@@ -241,10 +284,13 @@ void moveLeftByRow(int row, int col)
 		}
 		m = m+1;
 	}
+	return mergeFlag;
 }
 
-void moveLeft()
+int moveLeft()
 {
+	int mergeFlag = 0;
+
 	initMoveFlag();
 
 	for(int i=0; i<4; i++){
@@ -252,18 +298,21 @@ void moveLeft()
 				board[i][1] +
 				board[i][2] +
 				board[i][3]) != 0)
-		moveLeftByRow(i, 0);
+		if(moveLeftByRow(i, 0) == 1)
+			mergeFlag = 1;
 	}
+	return mergeFlag;
 }
 
 //============================================================================
 //Move right.
 //============================================================================
-void moveRightByRow(int row, int col)
+int moveRightByRow(int row, int col)
 {
 	int m = 2;
 	int n;
 	int cur;
+	int mergeFlag = 0;
 
 	while(m >= 0){
 		n = m+1;
@@ -274,11 +323,14 @@ void moveRightByRow(int row, int col)
 				board[row][cur] = 0;
 				cur = n;
 				n = n+1;
+				if(board[row][cur] != 0)
+					mergeFlag = 1;
 			}
 			else if(board[row][n] == board[row][cur] && moveFlag[row][n] != 1){
 				board[row][n] += board[row][cur];
-				score += board[n][col];
+				score += board[row][n];
 				moveFlag[row][n] = 1;
+				mergeFlag = 1;
 				board[row][cur] = 0;
 				break;
 			}
@@ -287,10 +339,12 @@ void moveRightByRow(int row, int col)
 		}
 		m = m-1;
 	}
+	return mergeFlag;
 }
 
-void moveRight()
+int moveRight()
 {
+	int mergeFlag = 0;
 	initMoveFlag();
 
 	for(int i=3; i>=0; i--){
@@ -298,39 +352,15 @@ void moveRight()
 				board[i][1] +
 				board[i][2] +
 				board[i][3]) != 0)
-		moveRightByRow(i, 3);
+		if(moveRightByRow(i, 3) == 1)
+			mergeFlag = 1;
 	}
+
+	return mergeFlag;
 }
 
-//============================================================================
-//Random number.
-//============================================================================
-//Randomly generate 2 or 4.
-int generateRandNum(float deviation)
-{
-	random_device rd;
-	int randNum;
-
-	mt19937 gen(rd());
-	// values near the mean are the most likely
-	// standard deviation affects the dispersion of generated values from the mean
-	std::normal_distribution<> d(2,deviation);
-	randNum = round(d(gen));
-	if(randNum ==2)
-		randNum = 2;
-	else
-		randNum = 4;
-	return randNum;
-}
-
-//Randomly generate coordinate
-void generateRandXY()
-{
-	randX = 3;
-	randY = 3;
-}
-
-int generateFixXY(int dir)
+//Randomly generate a tile.
+int generateRandTile()
 {
 	/* 1 - Up
 	 * 2 - Down
@@ -339,104 +369,95 @@ int generateFixXY(int dir)
 	 */
 	int row, col;
 	int gotIt = 0;
+	int randN;
+	int randT;
 
-	switch(dir){
-	case 1:
-		row = 3;
-		col = 3;
-		for(int i=row; i>=0; i--)
-			for(int j=col; j>=0; j--)
-				if(board[i][j] == 0){
-					board[i][j] = 2;
-					gotIt = 1;
-					return gotIt;
-				}
-		break;
-	case 2:
-		row = 0;
-		col = 0;
-		for(int i=row; i<=3; i++)
-			for(int j=col; j<=3; j++)
-				if(board[i][j] == 0){
-					board[i][j] = 2;
-					gotIt = 1;
-					return gotIt;
-				}
-		break;
-	case 3:
-		row = 0;
-		col = 3;
-		for(int i=row; i<=3; i++)
-			for(int j=col; j>=0; j--)
-				if(board[i][j] == 0){
-					board[i][j] = 2;
-					gotIt = 1;
-					return gotIt;
-				}
-		break;
-	case 4:
-		row = 3;
-		col = 0;
-		for(int i=row; i>=0; i--)
-			for(int j=col; j<=3; j++)
-				if(board[i][j] == 0){
-					board[i][j] = 2;
-					gotIt = 1;
-					return gotIt;
-				}
-		break;
+	Point point;
+
+	vector<Point>().swap(pointQueue);
+
+	for(int m=0; m<4; m++)
+		for(int n=0; n<4; n++){
+			if(board[m][n] == 0){
+				point.x = m;
+				point.y = n;
+				pointQueue.push_back(point);	//Record the empty tile in a queue.
+			}
+		}
+
+	randN = d(gen);
+	if(randN <=9)
+		randN = 2;
+	else
+		randN = 4;
+
+	//If there is any empty tile, new random number will be placed there.
+	if(pointQueue.size() != 0){
+		uniform_int_distribution <> t(0, pointQueue.size() - 1);
+		randT = t(gen);
+		row = pointQueue[randT].x;
+		col = pointQueue[randT].y;
+		board[row][col] = randN;
+		gotIt = 1;
 	}
+
 	return gotIt;
 }
+
 //============================================================================
 //Main program.
 //============================================================================
 int main() {
 
 	char dirKey;
-	/*
-	randNum = generateRandNum(0.5);	//随机产生第一个数字
-	generateRandXY();	//随机产生第一个数字的坐标
-	board[randX][randY] = randNum;
+	int randN;
 
-	randNum = generateRandNum(0.5);	//随机产生第二个数字
-	generateRandXY();	//随机产生第二个数字的坐标
-	board[2][2] = randNum;
-	*/
+	randN = d(gen);
+	if(randN <=9)
+		board[3][3] = 2;
+	else
+		board[3][3] = 4;
 
-	board[3][3] = 2;
 	showBoard();
 	while(checkMove() != 0)		//Check wether there is an available move.
 	{
-		cin.clear();
 		dirKey = getch();
 
 		if(dirKey == 'a'){
-			moveLeft();
-			if(generateFixXY(3) == 0) continue;
+			if(moveLeft() == 1){
+				//if(generateFixTile(3) == 0) continue;
+				if(generateRandTile() == 0)
+					continue;
+			}
 			showBoard();
-
 		}
 		else if(dirKey == 's'){
-			moveDown();
-			if(generateFixXY(2) == 0) continue;
+			if(moveDown() == 1){
+				//if(generateFixTile(2) == 0) continue;
+				if(generateRandTile() == 0)
+					continue;
+			}
 			showBoard();
 		}
 		else if(dirKey == 'd'){
-			moveRight();
-			if(generateFixXY(4) == 0) continue;
+			if(moveRight() == 1){
+				//if(generateFixTile(4) == 0) continue;
+				if(generateRandTile() == 0)
+					continue;
+			}
 			showBoard();
 		}
 		else if(dirKey == 'w'){
-			moveUp();
-			if(generateFixXY(1) == 0)	continue;
+			if(moveUp() == 1){
+				//if(generateFixTile(1) == 0)	continue;
+				if(generateRandTile() == 0)
+					continue;
+			}
 			showBoard();
 		}
 		else{
-			cout << dirKey << " --- It's not a arrow key!" << endl;
+			cout << dirKey << " --- It's not a direction (a/s/d/w) key!" << endl;
 		}
-
-		showBoard();
 		cout << endl;
 	}
 
